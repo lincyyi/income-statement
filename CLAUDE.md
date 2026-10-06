@@ -79,4 +79,4 @@ At 1h45 on the clock, stop coding and write `NOTES.md`, listing what's left.
 
 - Setup: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
 - Tests: `.venv/bin/pytest` (fails below 100% backend coverage)
-- Run the app: added in commit 7.
+- Run the app: `.venv/bin/uvicorn backend.app:app --reload`
