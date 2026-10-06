@@ -11,16 +11,17 @@ BALANCE_SHEET_SUBTYPE = "balance_sheet"
 
 @dataclass
 class StatementLine:
-    """One account's amount for the period."""
+    """One amount on the statement: an account's amount for the period, or, in a derived
+    section, the total of an earlier section, with no account."""
 
-    account: str
+    account: str | None
     name: str
     amount: Decimal
 
 
 @dataclass
 class StatementSection:
-    """One section as it appears on the statement. A derived section has no lines."""
+    """One section as it appears on the statement. Its total is the sum of its lines."""
 
     key: str
     name: str
@@ -56,20 +57,27 @@ class AccountSection:
 @dataclass
 class DerivedSection:
     """A section calculated from earlier sections: the totals of the sections keyed in
-    `add`, minus those keyed in `subtract`. `name` is only what the statement shows."""
+    `add`, minus those keyed in `subtract`. Each of those sections is one line, so the
+    statement shows how the total is calculated. `name` is only what the statement shows."""
 
     key: str
     name: str
     add: list[str]
     subtract: list[str]
 
-    def build(self, totals: dict[str, Decimal]) -> StatementSection:
-        """`totals` holds the total of every earlier section, by section key."""
-        added = sum((totals[key] for key in self.add), Decimal("0.00"))
-        subtracted = sum((totals[key] for key in self.subtract), Decimal("0.00"))
-        return StatementSection(
-            key=self.key, name=self.name, lines=[], total=added - subtracted
-        )
+    def build(self, earlier_sections: dict[str, StatementSection]) -> StatementSection:
+        """One line per section in `add` with its total, then one per section in
+        `subtract` with its total negated, so the lines add up to this section's total.
+        `earlier_sections` holds every section above this one, by section key."""
+        lines = []
+        for key in self.add:
+            section = earlier_sections[key]
+            lines.append(StatementLine(account=None, name=section.name, amount=section.total))
+        for key in self.subtract:
+            section = earlier_sections[key]
+            lines.append(StatementLine(account=None, name=section.name, amount=-section.total))
+        total = sum((line.amount for line in lines), Decimal("0.00"))
+        return StatementSection(key=self.key, name=self.name, lines=lines, total=total)
 
 
 # The income statement, top to bottom. A derived section can only use sections above it.
@@ -166,21 +174,19 @@ def build_income_statement(
     in layout order."""
     check_every_subtype_has_a_section(ledger, layout)
     amounts = account_amounts(ledger, start, end)
-    sections = []
-    totals = {}
+    sections_by_key = {}
     for definition in layout:
         if isinstance(definition, AccountSection):
             section = definition.build(ledger.accounts, amounts)
         else:
-            section = definition.build(totals)
-        sections.append(section)
-        totals[section.key] = section.total
+            section = definition.build(sections_by_key)
+        sections_by_key[section.key] = section
     return IncomeStatement(
         company=ledger.company,
         currency=ledger.currency,
         start=start,
         end=end,
-        sections=sections,
+        sections=list(sections_by_key.values()),
     )
 
 

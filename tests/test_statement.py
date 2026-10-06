@@ -83,7 +83,14 @@ def test_income_statement_for_q1_2026():
             ),
             # 37850.50 - 14272.75
             StatementSection(
-                key="gross_profit", name="Gross profit", lines=[], total=Decimal("23577.75")
+                key="gross_profit",
+                name="Gross profit",
+                lines=[
+                    StatementLine(None, "Revenue", Decimal("37850.50")),
+                    StatementLine(None, "Cost of goods sold", Decimal("-14272.75")),
+                ],
+                # 37850.50 - 14272.75
+                total=Decimal("23577.75"),
             ),
             StatementSection(
                 key="operating_expenses",
@@ -101,7 +108,11 @@ def test_income_statement_for_q1_2026():
             StatementSection(
                 key="operating_income",
                 name="Operating income",
-                lines=[],
+                lines=[
+                    StatementLine(None, "Gross profit", Decimal("23577.75")),
+                    StatementLine(None, "Operating expenses", Decimal("-68100.07")),
+                ],
+                # 23577.75 - 68100.07
                 total=Decimal("-44522.32"),
             ),
             StatementSection(
@@ -112,7 +123,14 @@ def test_income_statement_for_q1_2026():
             ),
             # -44522.32 + 42.18
             StatementSection(
-                key="net_income", name="Net income", lines=[], total=Decimal("-44480.14")
+                key="net_income",
+                name="Net income",
+                lines=[
+                    StatementLine(None, "Operating income", Decimal("-44522.32")),
+                    StatementLine(None, "Other income", Decimal("42.18")),
+                ],
+                # -44522.32 + 42.18
+                total=Decimal("-44480.14"),
             ),
         ],
     )
@@ -153,10 +171,12 @@ def test_income_statement_lists_accounts_with_no_activity_as_zero():
         ledger, datetime.date(2026, 4, 1), datetime.date(2026, 4, 30), INCOME_STATEMENT_LAYOUT
     )
 
+    # Lines with no account are derived sections showing earlier totals.
     lines = [
         (line.account, line.amount)
         for section in statement.sections
         for line in section.lines
+        if line.account is not None
     ]
     # JE-024 is the only entry in April.
     assert lines == [
@@ -171,7 +191,14 @@ def test_income_statement_lists_accounts_with_no_activity_as_zero():
         ("7000", Decimal("0.00")),
     ]
     assert statement.sections[-1] == StatementSection(
-        key="net_income", name="Net income", lines=[], total=Decimal("9100.00")
+        key="net_income",
+        name="Net income",
+        lines=[
+            StatementLine(None, "Operating income", Decimal("9100.00")),
+            StatementLine(None, "Other income", Decimal("0.00")),
+        ],
+        # 9100.00 + 0.00
+        total=Decimal("9100.00"),
     )
 
 

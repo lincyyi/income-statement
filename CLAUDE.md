@@ -48,7 +48,9 @@ small and plain.
   `type: expense`. The type sets the sign; the subtype sets the section.
 - `INCOME_STATEMENT_LAYOUT` in `backend/statement.py` defines the statement, top to bottom.
   An `AccountSection` lists the accounts of its subtypes. A `DerivedSection` (gross profit,
-  operating income, net income) adds and subtracts the totals of sections above it.
+  operating income, net income) adds and subtracts the totals of sections above it,
+  and lists each of them as a line (subtracted ones negated) so the lines add up to
+  its total.
   Sections refer to each other by `key` (such as `operating_income`), never by the
   display `name`.
 - `balance_sheet` accounts are left out. A subtype that no section lists raises an error

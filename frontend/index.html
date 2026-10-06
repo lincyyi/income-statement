@@ -62,13 +62,11 @@
       heading.textContent =
         `${body.company}, ${body.start} to ${body.end} (${body.currency})`;
       for (const section of body.sections) {
-        if (section.lines.length === 0) {
-          addRow(table, section.name, section.total, "section total");
-          continue;
-        }
         addRow(table, section.name, "", "section");
         for (const line of section.lines) {
-          const labelCell = addRow(table, `${line.account} ${line.name}`, line.amount, "line");
+          // A line in a derived section shows another section's total and has no account.
+          const label = line.account === null ? line.name : `${line.account} ${line.name}`;
+          const labelCell = addRow(table, label, line.amount, "line");
           labelCell.className = "account";
         }
         addRow(table, `Total ${section.name}`, section.total, "total");

@@ -35,7 +35,15 @@ def test_income_statement_for_q1_2026():
                 ],
                 "total": "14,272.75",
             },
-            {"key": "gross_profit", "name": "Gross profit", "lines": [], "total": "23,577.75"},
+            {
+                "key": "gross_profit",
+                "name": "Gross profit",
+                "lines": [
+                    {"account": None, "name": "Revenue", "amount": "37,850.50"},
+                    {"account": None, "name": "Cost of goods sold", "amount": "(14,272.75)"},
+                ],
+                "total": "23,577.75",
+            },
             {
                 "key": "operating_expenses",
                 "name": "Operating expenses",
@@ -50,7 +58,10 @@ def test_income_statement_for_q1_2026():
             {
                 "key": "operating_income",
                 "name": "Operating income",
-                "lines": [],
+                "lines": [
+                    {"account": None, "name": "Gross profit", "amount": "23,577.75"},
+                    {"account": None, "name": "Operating expenses", "amount": "(68,100.07)"},
+                ],
                 "total": "(44,522.32)",
             },
             {
@@ -61,7 +72,15 @@ def test_income_statement_for_q1_2026():
                 ],
                 "total": "42.18",
             },
-            {"key": "net_income", "name": "Net income", "lines": [], "total": "(44,480.14)"},
+            {
+                "key": "net_income",
+                "name": "Net income",
+                "lines": [
+                    {"account": None, "name": "Operating income", "amount": "(44,522.32)"},
+                    {"account": None, "name": "Other income", "amount": "42.18"},
+                ],
+                "total": "(44,480.14)",
+            },
         ],
     }
 
