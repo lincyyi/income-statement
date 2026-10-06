@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from backend.formatting import format_amount
 from backend.ledger import LEDGER_PATH, load_ledger
@@ -16,6 +16,7 @@ from backend.statement import (
 )
 
 LEDGER = load_ledger(LEDGER_PATH)
+FRONTEND_PATH = LEDGER_PATH.parent / "frontend" / "index.html"
 
 app = FastAPI()
 
@@ -38,6 +39,12 @@ def validation_error_as_text(
 
 # Only YYYY-MM-DD. FastAPI's own date type would also accept Unix timestamps such as 0.
 DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"
+
+
+@app.get("/")
+def get_frontend() -> FileResponse:
+    """The page that asks for dates and shows the statement."""
+    return FileResponse(FRONTEND_PATH)
 
 
 @app.get("/income-statement")

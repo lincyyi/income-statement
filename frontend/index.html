@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Income statement</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; min-width: 28rem; margin-top: 1rem; }
+    td { padding: 0.2rem 0.6rem; }
+    td.amount { text-align: right; font-variant-numeric: tabular-nums; }
+    td.account { padding-left: 1.6rem; }
+    tr.section td { font-weight: bold; padding-top: 1.2rem; }
+    tr.total td { font-weight: bold; border-top: 1px solid #999; }
+    #error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>Income statement</h1>
+  <form id="dates">
+    <label>Start <input type="date" id="start" value="2026-01-01" required></label>
+    <label>End <input type="date" id="end" value="2026-03-31" required></label>
+    <button type="submit">Show</button>
+  </form>
+  <p id="error"></p>
+  <h2 id="heading"></h2>
+  <table id="statement"></table>
+
+  <script>
+    // Only calls the API and shows what comes back. Every number, sign, and label of a
+    // section comes from the backend, already formatted.
+
+    function addRow(table, label, amount, className) {
+      const row = table.insertRow();
+      row.className = className;
+      const labelCell = row.insertCell();
+      labelCell.textContent = label;
+      const amountCell = row.insertCell();
+      amountCell.className = "amount";
+      amountCell.textContent = amount;
+      return labelCell;
+    }
+
+    async function showStatement(event) {
+      event.preventDefault();
+      const start = document.getElementById("start").value;
+      const end = document.getElementById("end").value;
+      const error = document.getElementById("error");
+      const heading = document.getElementById("heading");
+      const table = document.getElementById("statement");
+      error.textContent = "";
+      heading.textContent = "";
+      table.replaceChildren();
+
+      const response = await fetch(`/income-statement?start=${start}&end=${end}`);
+      const body = await response.json();
+      if (!response.ok) {
+        error.textContent = body.detail;
+        return;
+      }
+
+      heading.textContent =
+        `${body.company}, ${body.start} to ${body.end} (${body.currency})`;
+      for (const section of body.sections) {
+        if (section.lines.length === 0) {
+          addRow(table, section.name, section.total, "section total");
+          continue;
+        }
+        addRow(table, section.name, "", "section");
+        for (const line of section.lines) {
+          const labelCell = addRow(table, `${line.account} ${line.name}`, line.amount, "line");
+          labelCell.className = "account";
+        }
+        addRow(table, `Total ${section.name}`, section.total, "total");
+      }
+    }
+
+    document.getElementById("dates").addEventListener("submit", showStatement);
+    document.getElementById("dates").requestSubmit();
+  </script>
+</body>
+</html>

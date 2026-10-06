@@ -108,3 +108,11 @@ def test_rejects_start_after_end():
 
     assert response.status_code == 422
     assert response.json() == {"detail": "start must be on or before end"}
+
+
+def test_serves_the_frontend_page():
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/html; charset=utf-8"
+    assert "<title>Income statement</title>" in response.text
