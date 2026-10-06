@@ -25,7 +25,8 @@ small and plain.
   amount to a test, show the arithmetic it came from (for example `12450.75 + 8200.00 +
   15000.00 = 35650.75`) in the message or in a short comment.
 - Tests for the numbers run on `ledger.json`, with the ranges the user has checked by hand:
-  Q1 2026 line by line, January, and April. Use a small inline ledger only for a case the
+  Q1 2026 line by line, January, April, and the single day 2026-01-01 (JE-007 is out of
+  date order in the file). Use a small inline ledger only for a case the
   real data can't show, such as an unbalanced entry.
 - All logic lives in the backend. The frontend only sends the dates, calls the API, and
   shows what comes back. No sums, signs, sorting, or number formatting in JS.
