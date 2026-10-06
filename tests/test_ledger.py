@@ -1,7 +1,30 @@
 import datetime
+import json
 from decimal import Decimal
 
+import pytest
+
 from backend.ledger import LEDGER_PATH, Account, JournalLine, load_ledger
+
+
+def write_one_entry_ledger(tmp_path, lines):
+    data = {
+        "company": "Test Co",
+        "currency": "USD",
+        "accounts": [
+            {"number": "1000", "name": "Cash", "type": "asset",
+             "subtype": "balance_sheet", "is_active": True},
+            {"number": "4000", "name": "Product Revenue", "type": "revenue",
+             "subtype": "operating_revenue", "is_active": True},
+        ],
+        "journal_entries": [
+            {"id": "JE-1", "date": "2026-01-01", "status": "posted", "memo": "Test",
+             "lines": lines},
+        ],
+    }
+    path = tmp_path / "ledger.json"
+    path.write_text(json.dumps(data))
+    return path
 
 
 def test_loads_company_accounts_and_entries():
@@ -38,3 +61,23 @@ def test_entry_has_a_date_and_exact_decimal_amounts():
         JournalLine(account="4900", debit=Decimal("150.00"), credit=Decimal("0.00")),
         JournalLine(account="4000", debit=Decimal("0.00"), credit=Decimal("15000.00")),
     ]
+
+
+def test_rejects_an_entry_that_does_not_balance(tmp_path):
+    path = write_one_entry_ledger(tmp_path, [
+        {"account": "1000", "debit": "100.00", "credit": "0.00"},
+        {"account": "4000", "debit": "0.00", "credit": "90.00"},
+    ])
+
+    with pytest.raises(ValueError, match="JE-1 does not balance: debits 100.00, credits 90.00"):
+        load_ledger(path)
+
+
+def test_rejects_a_line_with_an_unknown_account(tmp_path):
+    path = write_one_entry_ledger(tmp_path, [
+        {"account": "1000", "debit": "100.00", "credit": "0.00"},
+        {"account": "9999", "debit": "0.00", "credit": "100.00"},
+    ])
+
+    with pytest.raises(ValueError, match="JE-1 uses unknown account 9999"):
+        load_ledger(path)

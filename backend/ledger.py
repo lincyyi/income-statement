@@ -82,9 +82,26 @@ def load_ledger(path: Path) -> Ledger:
                 lines=lines,
             )
         )
-    return Ledger(
+    ledger = Ledger(
         company=data["company"],
         currency=data["currency"],
         accounts=accounts,
         entries=entries,
     )
+    validate_ledger(ledger)
+    return ledger
+
+
+def validate_ledger(ledger: Ledger) -> None:
+    """Raise ValueError if any entry, whatever its status, uses an unknown account or
+    doesn't balance."""
+    for entry in ledger.entries:
+        for line in entry.lines:
+            if line.account not in ledger.accounts:
+                raise ValueError(f"{entry.id} uses unknown account {line.account}")
+        debits = sum(line.debit for line in entry.lines)
+        credits = sum(line.credit for line in entry.lines)
+        if debits != credits:
+            raise ValueError(
+                f"{entry.id} does not balance: debits {debits}, credits {credits}"
+            )
