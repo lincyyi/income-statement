@@ -30,8 +30,10 @@ small and plain.
   real data can't show, such as an unbalanced entry.
 - All logic lives in the backend. The frontend only sends the dates, calls the API, and
   shows what comes back. No sums, signs, sorting, or number formatting in JS.
-- Spell things out: name the rule in the code (for example `SECTION_BY_SUBTYPE`) instead of
-  hiding it in a clever expression. Don't repeat yourself.
+- Spell things out: name the rule in the code (for example `INCOME_STATEMENT_LAYOUT`)
+  instead of hiding it in a clever expression. Don't repeat yourself.
+- Section names and their order are not hard-coded anywhere but the layout. The code, the
+  API, and the frontend walk the list of sections.
 - Every class gets a docstring.
 - No features beyond the README list. No database, auth, Docker, or styling work.
 - When AI gets something wrong, note it for the "Where AI helped" part of `NOTES.md`.
@@ -44,12 +46,13 @@ small and plain.
 - The date range includes both `start` and `end`. Don't assume entries are sorted by date.
 - The amount on a line is `credit - debit` for `type: revenue` and `debit - credit` for
   `type: expense`. The type sets the sign; the subtype sets the section.
-- Section by subtype: `operating_revenue` and `contra_revenue` go to Revenue, `cogs` to Cost
-  of goods sold, `operating_expense` to Operating expenses, `other_income` to Other income,
-  and `balance_sheet` is left out. An unknown subtype raises an error instead of being
-  skipped.
-- Gross profit = Revenue - COGS. Operating income = Gross profit - Operating expenses. Net
-  income = Operating income + Other income.
+- `INCOME_STATEMENT_LAYOUT` in `backend/statement.py` defines the statement, top to bottom.
+  An `AccountSection` lists the accounts of its subtypes. A `DerivedSection` (gross profit,
+  operating income, net income) adds and subtracts the totals of sections above it.
+  Sections refer to each other by `key` (such as `operating_income`), never by the
+  display `name`.
+- `balance_sheet` accounts are left out. A subtype that no section lists raises an error
+  instead of being skipped.
 - Each section lists every account with a matching subtype, active or not, in
   chart-of-accounts order. An account with no activity in the range shows 0.00.
 - Report entries as recorded. Don't spread prepaid rent or re-accrue anything.
@@ -63,8 +66,8 @@ About 85 minutes, which leaves a buffer inside the 2 hours.
 2. Load the ledger into dataclasses (`Decimal`, `date`). (10)
 3. Load-time validation: balanced entries, known accounts. (5)
 4. `account_amounts`: posted only, inclusive dates, sign by type. (15)
-5. `build_income_statement`: sections with 0.00 rows, subtotals, gross profit, operating
-   income, net income. (15)
+5. `build_income_statement` from `INCOME_STATEMENT_LAYOUT`: account sections with 0.00
+   rows, and derived sections. (15)
 6. `format_amount`: thousands separators, two decimals, negatives in parentheses. (5)
 7. `GET /income-statement`, with 422 for missing, malformed, or reversed dates. (10)
 8. Frontend page at `/`. (10)
