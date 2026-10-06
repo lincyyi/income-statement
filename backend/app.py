@@ -3,7 +3,9 @@
 import datetime
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from backend.formatting import format_amount
 from backend.ledger import LEDGER_PATH, load_ledger
@@ -16,6 +18,22 @@ from backend.statement import (
 LEDGER = load_ledger(LEDGER_PATH)
 
 app = FastAPI()
+
+
+@app.exception_handler(RequestValidationError)
+def validation_error_as_text(
+    request: Request, error: RequestValidationError
+) -> JSONResponse:
+    """Answer 422 with `detail` as one string, like the route's own errors, so the page
+    can show it as it is. FastAPI's default `detail` is a list of objects."""
+    messages = []
+    for problem in error.errors():
+        name = problem["loc"][-1]
+        if problem["type"] == "missing":
+            messages.append(f"{name} is required")
+        else:
+            messages.append(f"{name} must be a date in YYYY-MM-DD form")
+    return JSONResponse(status_code=422, content={"detail": "; ".join(messages)})
 
 
 # Only YYYY-MM-DD. FastAPI's own date type would also accept Unix timestamps such as 0.

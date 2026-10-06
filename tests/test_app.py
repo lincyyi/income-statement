@@ -78,6 +78,14 @@ def test_rejects_a_missing_date():
     response = client.get("/income-statement?start=2026-01-01")
 
     assert response.status_code == 422
+    assert response.json() == {"detail": "end is required"}
+
+
+def test_lists_every_missing_date():
+    response = client.get("/income-statement")
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "start is required; end is required"}
 
 
 def test_rejects_a_date_not_in_yyyy_mm_dd_form():
@@ -85,6 +93,7 @@ def test_rejects_a_date_not_in_yyyy_mm_dd_form():
     response = client.get("/income-statement?start=1767225600&end=2026-03-31")
 
     assert response.status_code == 422
+    assert response.json() == {"detail": "start must be a date in YYYY-MM-DD form"}
 
 
 def test_rejects_a_date_that_does_not_exist():
